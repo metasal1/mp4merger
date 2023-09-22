@@ -4,6 +4,11 @@ const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
 // Set the FFmpeg path for fluent-ffmpeg
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
+export const config = {
+  api: {
+    externalResolver: true,
+  },
+};
 export default async function handler(req, res) {
 
   const answer = req.query.answer;
@@ -29,13 +34,18 @@ export default async function handler(req, res) {
     console.log('Extracted URL:', url);
     const filename = `output-${Date.now()}.mp4`;
     ffmpeg().input('./public/heytoly.mp4').videoCodec('copy').input(url).audioCodec('aac').save(`./public/${filename}`)
-      .on('end', () => { res.status(200).json({ downloadLink: `/${filename}` }) })
+      .on('end', () => {
+        res.status(200).send({ downloadLink: `/${filename}` })
+        return;
+      })
       .on('error', (err) => {
         console.error("Error:", err);
-        res.status(500).json({ error: 'Failed to process video' });
+        res.status(500).send({ error: 'Failed to process video' });
       });
-  } else {
-    console.log('URL not found');
-  }
 
+  } else {
+    const issue = 'URL not found'
+    res.status(500).send({ error: issue });
+    console.log(issue);
+  }
 }
